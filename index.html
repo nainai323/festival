@@ -385,7 +385,7 @@ function renderDevice() {
   $('shop').textContent = SHOP_NAME + (device ? '｜' + device : '');
 }
 function askDevice() {
-  const name = window.prompt('名前を入力してください（交代したらタイトルをタップして変更）', device);
+  const name = window.prompt('名前を入力してください（タイトルをタップしてユーザーを変更）', device);
   if (name === null) return;
   device = name.trim(); store('device', device); renderDevice();
 }
