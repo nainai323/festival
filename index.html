@@ -323,7 +323,7 @@ function renderHistory() {
       b.textContent = '取消';
       b.onclick = () => {
         if (b.dataset.arm) return cancelOrder(o);
-        b.dataset.arm = 1; b.textContent = 'もう一度で取消';
+        b.dataset.arm = 1; b.textContent = 'もう一度押して取消';
         setTimeout(() => { delete b.dataset.arm; b.textContent = '取消'; }, 3000);
       };
       row.appendChild(b);
@@ -417,7 +417,7 @@ $('refreshBtn').onclick = showSummary;
 $('resetBtn').onclick = () => {
   const b = $('resetBtn');
   if (!b.dataset.arm) {
-    b.dataset.arm = 1; b.textContent = 'もう一度でリセット';
+    b.dataset.arm = 1; b.textContent = 'もう一度押してリセット';
     setTimeout(() => { delete b.dataset.arm; b.textContent = 'リセット'; }, 3000);
     return;
   }
