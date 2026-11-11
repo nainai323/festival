@@ -248,7 +248,7 @@ function renderPayments() {
 
 function renderCash() {
   const total = cartTotal();
-  const show = payment === '現金' && total > 0;
+  const show = false;
   $('cash').classList.toggle('show', show);
   if (!show) return;
   const opts = [...new Set([total, 500, 1000, 2000, 5000, 10000].filter(v => v >= total))].slice(0, 4);
