@@ -12,8 +12,10 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { margin: 0; font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
          background: var(--bg); color: var(--ink); user-select: none; }
-  header { display: flex; align-items: center; justify-content: space-between;
-           padding: 10px 14px; background: var(--accent); color: #fff; }
+  header { display: flex; align-items: center; justify-content: space-between; position: relative;
+           padding: 14px 14px 10px; background: var(--accent); color: #fff; }
+  #devId { position: absolute; top: 2px; left: 6px; font-size: 9px; line-height: 1;
+           opacity: .45; letter-spacing: .05em; font-family: ui-monospace, monospace; }
   header h1 { font-size: 17px; margin: 0; letter-spacing: .05em; }
   #status { font-size: 12px; padding: 3px 8px; border-radius: 99px; background: rgba(255,255,255,.18); }
   #status.pending { background: #f2b84b; color: #2b2620; }
@@ -85,6 +87,7 @@
 </head>
 <body>
 <header>
+  <span id="devId"></span>
   <h1 id="shop">レジシステム</h1>
   <span id="status">接続中…</span>
 </header>
@@ -311,7 +314,14 @@ function toast(msg) {
 }
 
 // ---------- 記録・送信 ----------
-function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+// 端末コード：初回に自動で作ってこの端末に保存（例：K7P）
+const DEVICE_ID = store('deviceId') || (() => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  // 見間違えやすい I,O,0,1 は除外
+  const id = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  store('deviceId', id); return id;
+})();
+// 注文ID：端末コード-時刻+ランダム4文字（例：K7P-mwc3lr5f2mx8）
+function newId() { return DEVICE_ID + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 function enqueueOrder(order, sign) {
   order.items.forEach(it => queue.push({
@@ -379,6 +389,7 @@ $('refreshBtn').onclick = showSummary;
 
 // ---------- 起動 ----------
 $('shop').textContent = SHOP_NAME;
+$('devId').textContent = DEVICE_ID;
 document.title = SHOP_NAME;
 if (!IS_LIVE) $('demo').style.display = 'block';
 render(); showSummary(); flush();
