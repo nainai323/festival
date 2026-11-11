@@ -122,7 +122,7 @@
     <div class="card sum">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2 style="margin:0">本日の売上（この端末）</h2>
-        <button class="link" id="refreshBtn">更新</button>
+        <span><button class="link" id="resetBtn" style="color:var(--warn);margin-right:12px">リセット</button><button class="link" id="refreshBtn">更新</button></span>
       </div>
       <div id="summary" class="empty">「更新」を押すと表示</div>
     </div>
@@ -155,7 +155,7 @@ const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSei37LaK86K9bl1t1EmRE
 const IS_LIVE = !!FORM_URL;
 const config = { shopName: SHOP_NAME, menu: MENU, payments: PAYMENTS };
 
-// URLから送信先と質問IDを取り出す
+// 事前入力URLから送信先と質問ID（entry.xxxx）を取り出す
 function parseForm(url) {
   const u = new URL(url);
   const action = u.origin + u.pathname.replace(/\/viewform.*$/, '/formResponse');
@@ -412,6 +412,19 @@ function showSummary() {
     <div style="color:var(--sub)">${tally.orders}件の注文</div><table>${items}${pays}</table>`;
 }
 $('refreshBtn').onclick = showSummary;
+
+// 本日の売上（この端末）をリセット：2回押しで実行（スプレッドシートの記録は消えない）
+$('resetBtn').onclick = () => {
+  const b = $('resetBtn');
+  if (!b.dataset.arm) {
+    b.dataset.arm = 1; b.textContent = 'もう一度でリセット';
+    setTimeout(() => { delete b.dataset.arm; b.textContent = 'リセット'; }, 3000);
+    return;
+  }
+  delete b.dataset.arm; b.textContent = 'リセット';
+  tally = emptyTally(); store('tally', tally);
+  showSummary(); toast('本日の売上をリセットしました');
+};
 
 // ---------- 起動 ----------
 $('shop').textContent = SHOP_NAME;
