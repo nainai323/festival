@@ -144,6 +144,8 @@ const MENU = [
   { name: 'ココア',             price: 200, color: '#7A3E6E' },
 ];
 const PAYMENTS = ['現金', 'PayPay'];
+const HISTORY_MINUTES = 60;
+
 
 // Googleフォームの「事前入力したURL」をそのまま貼る（空なら見本モード）
 // フォームの質問は上から順に：商品 / 数量 / 金額 / 支払方法 / 注文ID（すべて「記述式」）
@@ -193,6 +195,36 @@ let payment = PAYMENTS[0];
 let tendered = 0;
 let queue = store('queue') || [];       // 未送信の行
 let history = store('history') || [];   // この端末の注文履歴（取消を含む）
+
+// 本日の売上（この端末）は履歴とは別に、合計だけを持っておく（履歴を消しても残る）
+function emptyTally() { return { day: new Date().toDateString(), orders: 0, total: 0, byItem: {}, byPay: {} }; }
+let tally = store('tally');
+if (!tally) {  // 初回：今日の履歴から作る
+  tally = emptyTally();
+  history.filter(o => !o.cancelled && new Date(o.time).toDateString() === tally.day)
+    .forEach(o => addToTally(o, 1, false));
+  store('tally', tally);
+}
+function addToTally(o, sign, save = true) {
+  if (tally.day !== new Date().toDateString()) tally = emptyTally();
+  tally.orders += sign;
+  o.items.forEach(it => {
+    tally.byItem[it.name] = (tally.byItem[it.name] || 0) + sign * it.qty;
+    tally.byPay[o.payment] = (tally.byPay[o.payment] || 0) + sign * it.qty * it.price;
+    tally.total += sign * it.qty * it.price;
+  });
+  if (save) store('tally', tally);
+}
+
+// 保存時間を過ぎた履歴を消す
+function purgeHistory() {
+  const limit = Date.now() - HISTORY_MINUTES * 60 * 1000;
+  const kept = history.filter(o => o.time >= limit);
+  if (kept.length !== history.length) {
+    history = kept; store('history', history);
+    renderHistory();
+  }
+}
 
 const $ = id => document.getElementById(id);
 const yen = n => '¥' + n.toLocaleString();
@@ -354,6 +386,7 @@ $('payBtn').onclick = () => {
   if (!items.length) return;
   const order = { id: newId(), time: Date.now(), items, payment };
   history.unshift(order); history = history.slice(0, 500); store('history', history);
+  addToTally(order, 1);
   enqueueOrder(order, 1);
   const change = payment === '現金' && tendered ? `　お釣り ${yen(tendered - cartTotal())}` : '';
   toast(`記録しました ${yen(cartTotal())}${change}`);
@@ -364,26 +397,20 @@ $('clearBtn').onclick = () => { cart = {}; tendered = 0; render(); };
 
 function cancelOrder(o) {
   o.cancelled = true; store('history', history);
+  addToTally(o, -1);
   enqueueOrder(o, -1);
   toast('取り消しました'); render(); showSummary();
 }
 
 // この端末の本日分を集計
+// この端末の本日分を表示
 function showSummary() {
-  const today = new Date().toDateString();
-  const orders = history.filter(o => !o.cancelled && new Date(o.time).toDateString() === today);
-  const byItem = {}, byPay = {};
-  let total = 0;
-  orders.forEach(o => {
-    o.items.forEach(it => { byItem[it.name] = (byItem[it.name] || 0) + it.qty; });
-    byPay[o.payment] = (byPay[o.payment] || 0) + orderTotal(o);
-    total += orderTotal(o);
-  });
-  const items = MENU.map(m => `<tr><td>${m.name}</td><td>${byItem[m.name] || 0}杯</td></tr>`).join('');
-  const pays = PAYMENTS.map(p => `<tr><td>${p}</td><td>${yen(byPay[p] || 0)}</td></tr>`).join('');
+  if (tally.day !== new Date().toDateString()) { tally = emptyTally(); store('tally', tally); }
+  const items = MENU.map(m => `<tr><td>${m.name}</td><td>${tally.byItem[m.name] || 0}杯</td></tr>`).join('');
+  const pays = PAYMENTS.map(p => `<tr><td>${p}</td><td>${yen(tally.byPay[p] || 0)}</td></tr>`).join('');
   $('summary').className = '';
-  $('summary').innerHTML = `<div class="big">${yen(total)}</div>
-    <div style="color:var(--sub)">${orders.length}件の注文</div><table>${items}${pays}</table>`;
+  $('summary').innerHTML = `<div class="big">${yen(tally.total)}</div>
+    <div style="color:var(--sub)">${tally.orders}件の注文</div><table>${items}${pays}</table>`;
 }
 $('refreshBtn').onclick = showSummary;
 
@@ -392,6 +419,8 @@ $('shop').textContent = SHOP_NAME;
 $('devId').textContent = DEVICE_ID;
 document.title = SHOP_NAME;
 if (!IS_LIVE) $('demo').style.display = 'block';
+purgeHistory();
+setInterval(purgeHistory, 60 * 1000);
 render(); showSummary(); flush();
 </script>
 </body>
