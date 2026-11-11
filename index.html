@@ -145,19 +145,17 @@ const MENU = [
 ];
 const PAYMENTS = ['現金', 'PayPay'];
 
-// 端末に残す注文履歴の保存時間（分）。過ぎた注文は「直近の注文」から消え、取り消しもできなくなる
-// （スプレッドシートの記録は消えません）
+// 端末に残す注文履歴の保存時間（分）
 const HISTORY_MINUTES = 60;
 
 // Googleフォームの「事前入力したURL」をそのまま貼る（空なら見本モード）
-// フォームの質問は上から順に：商品 / 数量 / 金額 / 支払方法 / 注文ID（すべて「記述式」）
 const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSei37LaK86K9bl1t1EmREUWsIT5VFjbVuymmjlQrfWRA9iKTw/viewform?usp=pp_url&entry.787038204=a&entry.1135829955=b&entry.725204255=c&entry.300637915=d&entry.984296458=e';
 // =============================================
 
 const IS_LIVE = !!FORM_URL;
 const config = { shopName: SHOP_NAME, menu: MENU, payments: PAYMENTS };
 
-// 事前入力URLから送信先と質問ID（entry.xxxx）を取り出す
+// URLから送信先と質問IDを取り出す
 function parseForm(url) {
   const u = new URL(url);
   const action = u.origin + u.pathname.replace(/\/viewform.*$/, '/formResponse');
@@ -348,13 +346,13 @@ function toast(msg) {
 }
 
 // ---------- 記録・送信 ----------
-// 端末コード：初回に自動で作ってこの端末に保存（例：K7P）
+// 端末コード
 const DEVICE_ID = store('deviceId') || (() => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  // 見間違えやすい I,O,0,1 は除外
   const id = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   store('deviceId', id); return id;
 })();
-// 注文ID：端末コード-時刻+ランダム4文字（例：K7P-mwc3lr5f2mx8）
+// 注文ID：端末コード-時刻+ランダム4文字
 function newId() { return DEVICE_ID + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 function enqueueOrder(order, sign) {
