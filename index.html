@@ -14,7 +14,7 @@
          background: var(--bg); color: var(--ink); user-select: none; }
   header { display: flex; align-items: center; justify-content: space-between;
            padding: 10px 14px; background: var(--accent); color: #fff; }
-  header h1 { font-size: 17px; margin: 0; letter-spacing: .05em; }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .05em; cursor: pointer; }
   #status { font-size: 12px; padding: 3px 8px; border-radius: 99px; background: rgba(255,255,255,.18); }
   #status.pending { background: #f2b84b; color: #2b2620; }
   main { max-width: 760px; margin: 0 auto; padding: 12px; display: grid; gap: 12px; }
@@ -85,7 +85,7 @@
 </head>
 <body>
 <header>
-  <h1 id="shop">レジ</h1>
+  <h1 id="shop">レジシステム</h1>
   <span id="status">接続中…</span>
 </header>
 <div id="demo">見本モード：FORM_URL が未設定のため、記録はこの端末の中だけに保存されます</div>
@@ -118,7 +118,7 @@
 
     <div class="card sum">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 style="margin:0">本日の売上（この端末のみ）</h2>
+        <h2 style="margin:0">本日の売上（この端末）</h2>
         <button class="link" id="refreshBtn">更新</button>
       </div>
       <div id="summary" class="empty">「更新」を押すと表示</div>
@@ -129,22 +129,23 @@
 
 <script>
 // ============ 設定（ここだけ編集） ============
-const SHOP_NAME = '星のカフェ';
+const SHOP_NAME = 'レジシステム';
 const MENU = [
-  { name: '[ゼリー]ザクロ', price: 200, color: '#B0263E' },
-  { name: '[ゼリー]レモネード',   price: 200, color: '#A87B0C' },
-  { name: '[ゼリー]サイダー', price: 200, color: '#1D74B0' },
-  { name: 'ザクロ', price: 200, color: '#B0263E' },
-  { name: 'レモネード',   price: 200, color: '#A87B0C' },
-  { name: 'サイダー', price: 200, color: '#1D74B0' },
-  { name: 'コーヒー',   price: 200, color: '#4A3328' },
-  { name: 'ココア',   price: 200, color: '#7A3E6E' },
+  { name: '[ゼリー]ザクロ',     price: 200, color: '#B0263E' },
+  { name: '[ゼリー]レモネード', price: 200, color: '#A87B0C' },
+  { name: '[ゼリー]サイダー',   price: 200, color: '#1D74B0' },
+  { name: 'ザクロ',             price: 200, color: '#B0263E' },
+  { name: 'レモネード',         price: 200, color: '#A87B0C' },
+  { name: 'サイダー',           price: 200, color: '#1D74B0' },
+  { name: 'コーヒー',           price: 200, color: '#4A3328' },
+  { name: 'ココア',             price: 200, color: '#7A3E6E' },
 ];
 const PAYMENTS = ['現金', 'PayPay'];
 
 // Googleフォームの「事前入力したURL」をそのまま貼る（空なら見本モード）
-// フォームの質問は上から順に：商品 / 数量 / 金額 / 支払方法 / 注文ID（すべて「記述式」）
-const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSei37LaK86K9bl1t1EmREUWsIT5VFjbVuymmjlQrfWRA9iKTw/viewform?usp=pp_url&entry.787038204=a&entry.1135829955=b&entry.725204255=c&entry.300637915=d&entry.984296458=e';
+// フォームの質問は上から順に：商品 / 数量 / 金額 / 支払方法 / 注文ID / 名前（すべて「記述式」）
+// ※「名前」は任意。6つ目の質問がなければ名前は送られません
+const FORM_URL = '';
 // =============================================
 
 const IS_LIVE = !!FORM_URL;
@@ -178,7 +179,8 @@ async function sendLine(line) {
     await new Promise(r => setTimeout(r, 100)); return;
   }
   const body = new URLSearchParams();
-  [line.name, line.qty, line.amount, line.payment, line.orderId]
+  [line.name, line.qty, line.amount, line.payment, line.orderId, line.device || '']
+    .slice(0, form.ids.length)
     .forEach((v, i) => body.append(form.ids[i], String(v)));
   // no-cors：応答は読めないが、通信エラーでなければ届いている
   await fetch(form.action, { method: 'POST', mode: 'no-cors', body });
@@ -188,6 +190,7 @@ async function sendLine(line) {
 let cart = {};
 let payment = PAYMENTS[0];
 let tendered = 0;
+let device = store('device') || '';
 let queue = store('queue') || [];       // 未送信の行
 let history = store('history') || [];   // この端末の注文履歴（取消を含む）
 
@@ -204,7 +207,7 @@ function renderMenu() {
   MENU.forEach(m => {
     const b = document.createElement('button');
     const jelly = m.name.match(/^\[ゼリー\](.*)$/);
-    b.className = 'item';
+    b.className = 'item' + (jelly ? ' jelly' : '');
     b.style.background = m.color || '#6b7a8f';
     b.innerHTML = (jelly ? `<span class="tag">ゼリー入り</span>${jelly[1]}` : m.name) +
       `<small>${yen(m.price)}</small>` +
@@ -256,7 +259,7 @@ function renderPayments() {
 
 function renderCash() {
   const total = cartTotal();
-  const show = false;
+  const show = false;  // 預かり金額・お釣り表示を使わない
   $('cash').classList.toggle('show', show);
   if (!show) return;
   const opts = [...new Set([total, 500, 1000, 2000, 5000, 10000].filter(v => v >= total))].slice(0, 4);
@@ -288,7 +291,7 @@ function renderHistory() {
       b.textContent = '取消';
       b.onclick = () => {
         if (b.dataset.arm) return cancelOrder(o);
-        b.dataset.arm = 1; b.textContent = 'もう一度押して取消';
+        b.dataset.arm = 1; b.textContent = 'もう一度で取消';
         setTimeout(() => { delete b.dataset.arm; b.textContent = '取消'; }, 3000);
       };
       row.appendChild(b);
@@ -316,7 +319,7 @@ function newId() { return Date.now().toString(36) + Math.random().toString(36).s
 function enqueueOrder(order, sign) {
   order.items.forEach(it => queue.push({
     name: it.name, qty: sign * it.qty, amount: sign * it.qty * it.price,
-    payment: order.payment, orderId: (sign < 0 ? 'C-' : '') + order.id,
+    payment: order.payment, orderId: (sign < 0 ? 'C-' : '') + order.id, device,
   }));
   store('queue', queue); renderStatus(); flush();
 }
@@ -377,9 +380,21 @@ function showSummary() {
 }
 $('refreshBtn').onclick = showSummary;
 
+// ---------- 名前 ----------
+function renderDevice() {
+  $('shop').textContent = SHOP_NAME + (device ? '｜' + device : '');
+}
+function askDevice() {
+  const name = window.prompt('名前を入力してください（交代したらタイトルをタップして変更）', device);
+  if (name === null) return;
+  device = name.trim(); store('device', device); renderDevice();
+}
+$('shop').onclick = askDevice;   // タイトルをタップすると名前を変更
+
 // ---------- 起動 ----------
-$('shop').textContent = 'レジシステム';
-document.title = 'レジシステム';
+renderDevice();
+if (!device) setTimeout(askDevice, 300);
+document.title = SHOP_NAME;
 if (!IS_LIVE) $('demo').style.display = 'block';
 render(); showSummary(); flush();
 </script>
