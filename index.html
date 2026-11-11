@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>星のカフェ レジ</title>
+<style>
+  :root {
+    --bg: #f6f3ee; --card: #fff; --ink: #2b2620; --sub: #8a8177; --line: #e6dfd4;
+    --accent: #2f4b7c; --ok: #2e7d4f; --warn: #c0392b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+         background: var(--bg); color: var(--ink); user-select: none; }
+  header { display: flex; align-items: center; justify-content: space-between;
+           padding: 10px 14px; background: var(--accent); color: #fff; }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .05em; }
+  #status { font-size: 12px; padding: 3px 8px; border-radius: 99px; background: rgba(255,255,255,.18); }
+  #status.pending { background: #f2b84b; color: #2b2620; }
+  main { max-width: 760px; margin: 0 auto; padding: 12px; display: grid; gap: 12px; }
+  @media (min-width: 700px) { main { grid-template-columns: 1.3fr 1fr; align-items: start; } }
+
+  .menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .item { border: 0; border-radius: 14px; padding: 16px 10px; min-height: 92px; color: #fff;
+          font-size: 17px; font-weight: 700; position: relative; text-shadow: 0 1px 2px rgba(0,0,0,.25);
+          box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+  .item:active { transform: translateY(2px); box-shadow: none; }
+  .item small { display: block; font-size: 13px; font-weight: 500; margin-top: 4px; opacity: .95; }
+  .item .badge { position: absolute; top: 6px; right: 8px; background: #fff; color: var(--ink);
+                 border-radius: 99px; min-width: 26px; height: 26px; line-height: 26px; font-size: 14px;
+                 text-shadow: none; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+  .cart-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .cart-row .n { flex: 1; font-size: 15px; }
+  .cart-row .q { width: 28px; text-align: center; font-weight: 700; }
+  .cart-row button { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line);
+                     background: #faf8f5; font-size: 18px; }
+  .cart-row .s { width: 64px; text-align: right; font-variant-numeric: tabular-nums; }
+  .empty { color: var(--sub); font-size: 14px; padding: 10px 0; text-align: center; }
+  .total { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 0 8px; }
+  .total b { font-size: 30px; font-variant-numeric: tabular-nums; }
+
+  .seg { display: grid; grid-auto-flow: column; gap: 6px; margin-bottom: 8px; }
+  .seg button { padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: #faf8f5; font-size: 15px; }
+  .seg button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .cash { display: none; margin-bottom: 8px; }
+  .cash.show { display: block; }
+  .cash .row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .cash .row button { flex: 1; padding: 8px 4px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-size: 14px; }
+  .cash .row button.on { border-color: var(--accent); background: #e9eef7; font-weight: 700; }
+  .change { margin-top: 6px; font-size: 15px; }
+  .change b { font-size: 22px; }
+
+  .actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
+  .btn { border: 0; border-radius: 12px; padding: 14px; font-size: 17px; font-weight: 700; }
+  .btn.clear { background: #eee8df; color: var(--ink); }
+  .btn.pay { background: var(--ok); color: #fff; }
+  .btn:disabled { opacity: .4; }
+
+  h2 { font-size: 14px; margin: 0 0 6px; color: var(--sub); font-weight: 600; }
+  .hist { font-size: 13px; }
+  .hist div { display: flex; justify-content: space-between; gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+  .hist .t { color: var(--sub); width: 44px; flex: none; }
+  .hist .d { flex: 1; }
+  .hist .cancelled .d { text-decoration: line-through; color: var(--sub); }
+  .hist button { border: 1px solid var(--line); background: #fff; border-radius: 8px; font-size: 12px; padding: 2px 8px; color: var(--warn); }
+  .sum { font-size: 14px; }
+  .sum .big { font-size: 22px; font-weight: 700; }
+  .sum table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .sum td { padding: 3px 0; border-bottom: 1px solid var(--line); }
+  .sum td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .link { background: none; border: 0; color: var(--accent); font-size: 13px; padding: 0; text-decoration: underline; }
+
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(80px);
+           background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px;
+           transition: transform .25s; z-index: 10; }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #demo { background: #fff4d6; font-size: 12px; text-align: center; padding: 6px; display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="shop">星のカフェ レジ</h1>
+  <span id="status">接続中…</span>
+</header>
+<div id="demo">見本モード：FORM_URL が未設定のため、記録はこの端末の中だけに保存されます</div>
+
+<main>
+  <section>
+    <div class="menu" id="menu"></div>
+  </section>
+
+  <section style="display:grid; gap:12px;">
+    <div class="card">
+      <h2>注文</h2>
+      <div id="cart"></div>
+      <div class="total"><span>合計</span><b id="total">¥0</b></div>
+      <div class="seg" id="payments"></div>
+      <div class="cash" id="cash">
+        <div class="row" id="tendered"></div>
+        <div class="change" id="change"></div>
+      </div>
+      <div class="actions">
+        <button class="btn clear" id="clearBtn">クリア</button>
+        <button class="btn pay" id="payBtn" disabled>会計して記録</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>直近の注文</h2>
+      <div class="hist" id="hist"><div class="empty" style="display:block">まだありません</div></div>
+    </div>
+
+    <div class="card sum">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="margin:0">本日の売上（この端末）</h2>
+        <button class="link" id="refreshBtn">更新</button>
+      </div>
+      <div id="summary" class="empty">「更新」を押すと表示</div>
+    </div>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+// ============ 設定（ここだけ編集） ============
+const SHOP_NAME = '星のカフェ';
+const MENU = [
+  { name: 'ミルクティー', price: 400, color: '#c8a27a' },
+  { name: '抹茶ミルク',   price: 450, color: '#8fb36b' },
+  { name: 'いちごミルク', price: 450, color: '#e98fa3' },
+  { name: 'マンゴー',     price: 450, color: '#f2b84b' },
+  { name: 'ゼリー増量',   price: 100, color: '#9aa5b1' },
+];
+const PAYMENTS = ['現金', 'PayPay'];
+
+// Googleフォームの「事前入力したURL」をそのまま貼る（空なら見本モード）
+// フォームの質問は上から順に：商品 / 数量 / 金額 / 支払方法 / 注文ID（すべて「記述式」）
+const FORM_URL = '';
+// =============================================
+
+const IS_LIVE = !!FORM_URL;
+const config = { shopName: SHOP_NAME, menu: MENU, payments: PAYMENTS };
+
+// 事前入力URLから送信先と質問ID（entry.xxxx）を取り出す
+function parseForm(url) {
+  const u = new URL(url);
+  const action = u.origin + u.pathname.replace(/\/viewform.*$/, '/formResponse');
+  const ids = [...u.searchParams.keys()].filter(k => k.startsWith('entry.'));
+  if (ids.length < 5) throw new Error('事前入力URLに質問が5つ含まれていません');
+  return { action, ids };
+}
+let form = null;
+if (IS_LIVE) {
+  try { form = parseForm(FORM_URL); }
+  catch (e) { alertBar('FORM_URL の形式が正しくありません：' + e.message); }
+}
+
+function store(key, val) {
+  try {
+    if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null');
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (e) { return null; }
+}
+
+// 1行（商品1種類）をフォームに送信
+async function sendLine(line) {
+  if (IS_LIVE && !form) throw new Error('FORM_URL 未設定');  // 設定ミス時は端末に残す
+  if (!form) { // 見本モード：送ったことにする
+    await new Promise(r => setTimeout(r, 100)); return;
+  }
+  const body = new URLSearchParams();
+  [line.name, line.qty, line.amount, line.payment, line.orderId]
+    .forEach((v, i) => body.append(form.ids[i], String(v)));
+  // no-cors：応答は読めないが、通信エラーでなければ届いている
+  await fetch(form.action, { method: 'POST', mode: 'no-cors', body });
+}
+
+// ---------- 状態 ----------
+let cart = {};
+let payment = PAYMENTS[0];
+let tendered = 0;
+let queue = store('queue') || [];       // 未送信の行
+let history = store('history') || [];   // この端末の注文履歴（取消を含む）
+
+const $ = id => document.getElementById(id);
+const yen = n => '¥' + n.toLocaleString();
+
+function alertBar(msg) {
+  const d = document.getElementById('demo'); d.textContent = msg; d.style.display = 'block'; d.style.background = '#fde2e2';
+}
+
+// ---------- 画面 ----------
+function renderMenu() {
+  $('menu').innerHTML = '';
+  MENU.forEach(m => {
+    const b = document.createElement('button');
+    b.className = 'item';
+    b.style.background = m.color || '#6b7a8f';
+    b.innerHTML = `${m.name}<small>${yen(m.price)}</small>` +
+      (cart[m.name] ? `<span class="badge">${cart[m.name]}</span>` : '');
+    b.onclick = () => { cart[m.name] = (cart[m.name] || 0) + 1; render(); };
+    $('menu').appendChild(b);
+  });
+}
+
+function cartItems() {
+  return MENU.filter(m => cart[m.name] > 0).map(m => ({ name: m.name, price: m.price, qty: cart[m.name] }));
+}
+function cartTotal() { return cartItems().reduce((s, it) => s + it.price * it.qty, 0); }
+function orderTotal(o) { return o.items.reduce((s, it) => s + it.price * it.qty, 0); }
+
+function renderCart() {
+  const items = cartItems();
+  const el = $('cart');
+  if (!items.length) el.innerHTML = '<div class="empty">メニューをタップして追加</div>';
+  else {
+    el.innerHTML = '';
+    items.forEach(it => {
+      const row = document.createElement('div');
+      row.className = 'cart-row';
+      row.innerHTML = `<span class="n">${it.name}</span>
+        <button data-d="-1">−</button><span class="q">${it.qty}</span><button data-d="1">＋</button>
+        <span class="s">${yen(it.price * it.qty)}</span>`;
+      row.querySelectorAll('button').forEach(b => b.onclick = () => {
+        cart[it.name] = Math.max(0, cart[it.name] + Number(b.dataset.d)); render();
+      });
+      el.appendChild(row);
+    });
+  }
+  const total = cartTotal();
+  $('total').textContent = yen(total);
+  $('payBtn').disabled = !items.length || (payment === '現金' && tendered > 0 && tendered < total);
+}
+
+function renderPayments() {
+  $('payments').innerHTML = '';
+  PAYMENTS.forEach(p => {
+    const b = document.createElement('button');
+    b.textContent = p;
+    if (p === payment) b.className = 'on';
+    b.onclick = () => { payment = p; tendered = 0; render(); };
+    $('payments').appendChild(b);
+  });
+}
+
+function renderCash() {
+  const total = cartTotal();
+  const show = payment === '現金' && total > 0;
+  $('cash').classList.toggle('show', show);
+  if (!show) return;
+  const opts = [...new Set([total, 500, 1000, 2000, 5000, 10000].filter(v => v >= total))].slice(0, 4);
+  $('tendered').innerHTML = '';
+  opts.forEach(v => {
+    const b = document.createElement('button');
+    b.textContent = v === total ? 'ちょうど' : yen(v);
+    if (v === tendered) b.className = 'on';
+    b.onclick = () => { tendered = v; render(); };
+    $('tendered').appendChild(b);
+  });
+  $('change').innerHTML = tendered ? `お釣り <b>${yen(tendered - total)}</b>`
+    : '<span style="color:var(--sub)">お預かり金額を選ぶとお釣りを表示</span>';
+}
+
+function renderHistory() {
+  const el = $('hist');
+  if (!history.length) { el.innerHTML = '<div class="empty" style="display:block">まだありません</div>'; return; }
+  el.innerHTML = '';
+  history.slice(0, 8).forEach(o => {
+    const t = new Date(o.time);
+    const row = document.createElement('div');
+    if (o.cancelled) row.className = 'cancelled';
+    const desc = o.items.map(it => `${it.name}×${it.qty}`).join('、');
+    row.innerHTML = `<span class="t">${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}</span>
+      <span class="d">${desc}（${o.payment}）${yen(orderTotal(o))}</span>`;
+    if (!o.cancelled) {
+      const b = document.createElement('button');
+      b.textContent = '取消';
+      b.onclick = () => {
+        if (b.dataset.arm) return cancelOrder(o);
+        b.dataset.arm = 1; b.textContent = 'もう一度で取消';
+        setTimeout(() => { delete b.dataset.arm; b.textContent = '取消'; }, 3000);
+      };
+      row.appendChild(b);
+    }
+    el.appendChild(row);
+  });
+}
+
+function renderStatus() {
+  const s = $('status');
+  if (queue.length) { s.textContent = `未送信 ${queue.length}件`; s.className = 'pending'; }
+  else { s.textContent = IS_LIVE ? '送信済み' : '見本モード'; s.className = ''; }
+}
+
+function render() { renderMenu(); renderCart(); renderPayments(); renderCash(); renderHistory(); renderStatus(); }
+
+function toast(msg) {
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ---------- 記録・送信 ----------
+function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function enqueueOrder(order, sign) {
+  order.items.forEach(it => queue.push({
+    name: it.name, qty: sign * it.qty, amount: sign * it.qty * it.price,
+    payment: order.payment, orderId: (sign < 0 ? 'C-' : '') + order.id,
+  }));
+  store('queue', queue); renderStatus(); flush();
+}
+
+let flushing = false;
+async function flush() {
+  if (flushing || !queue.length) return;
+  flushing = true;
+  try {
+    while (queue.length) {
+      await sendLine(queue[0]);
+      queue.shift(); store('queue', queue); renderStatus();
+    }
+  } catch (e) {
+    // 通信エラー：端末に残しておき、後で自動再送
+  } finally {
+    flushing = false; renderStatus();
+  }
+}
+setInterval(flush, 10000);
+window.addEventListener('online', flush);
+
+$('payBtn').onclick = () => {
+  const items = cartItems();
+  if (!items.length) return;
+  const order = { id: newId(), time: Date.now(), items, payment };
+  history.unshift(order); history = history.slice(0, 500); store('history', history);
+  enqueueOrder(order, 1);
+  const change = payment === '現金' && tendered ? `　お釣り ${yen(tendered - cartTotal())}` : '';
+  toast(`記録しました ${yen(cartTotal())}${change}`);
+  cart = {}; tendered = 0; payment = PAYMENTS[0]; render(); showSummary();
+};
+
+$('clearBtn').onclick = () => { cart = {}; tendered = 0; render(); };
+
+function cancelOrder(o) {
+  o.cancelled = true; store('history', history);
+  enqueueOrder(o, -1);
+  toast('取り消しました'); render(); showSummary();
+}
+
+// この端末の本日分を集計
+function showSummary() {
+  const today = new Date().toDateString();
+  const orders = history.filter(o => !o.cancelled && new Date(o.time).toDateString() === today);
+  const byItem = {}, byPay = {};
+  let total = 0;
+  orders.forEach(o => {
+    o.items.forEach(it => { byItem[it.name] = (byItem[it.name] || 0) + it.qty; });
+    byPay[o.payment] = (byPay[o.payment] || 0) + orderTotal(o);
+    total += orderTotal(o);
+  });
+  const items = MENU.map(m => `<tr><td>${m.name}</td><td>${byItem[m.name] || 0}杯</td></tr>`).join('');
+  const pays = PAYMENTS.map(p => `<tr><td>${p}</td><td>${yen(byPay[p] || 0)}</td></tr>`).join('');
+  $('summary').className = '';
+  $('summary').innerHTML = `<div class="big">${yen(total)}</div>
+    <div style="color:var(--sub)">${orders.length}件の注文</div><table>${items}${pays}</table>`;
+}
+$('refreshBtn').onclick = showSummary;
+
+// ---------- 起動 ----------
+$('shop').textContent = SHOP_NAME + ' レジ';
+document.title = SHOP_NAME + ' レジ';
+if (!IS_LIVE) $('demo').style.display = 'block';
+render(); showSummary(); flush();
+</script>
+</body>
+</html>
