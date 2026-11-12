@@ -93,6 +93,7 @@
                    background: var(--accent); color: #fff; }
   #demo { background: #fff4d6; font-size: 12px; text-align: center; padding: 6px; display: none; }
 </style>
+
 </head>
 <body>
 <header>
@@ -163,8 +164,8 @@ const PAYMENTS = ['現金', 'PayPay'];
 
 // 注意メッセージ
 const NOTICE_FROM = new Date(2026, 11 - 1, 20);
-const NOTICE_TEXT = '本番モードです\nレジ担当者以外は\n入力しないでください';  // \n で改行
-const NOTICE_TEXT_TEST = 'テストモードです\n11/20(金)より\n本番モードに切り替わります';  // \n で改行
+const NOTICE_TEXT = '本番モードです\nレジ担当者以外は\n入力しないでください'; 
+const NOTICE_TEXT_TEST = 'テストモードです\n11/20(金)より\n本番モードに切り替わります'; 
 
 // 端末に残す注文履歴の保存時間（分）
 const HISTORY_MINUTES = 60;
