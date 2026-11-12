@@ -82,6 +82,15 @@
            background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px;
            transition: transform .25s; z-index: 10; }
   #toast.show { transform: translateX(-50%) translateY(0); }
+  #notice { position: fixed; inset: 0; background: rgba(20,20,30,.55); z-index: 20;
+            display: none; align-items: center; justify-content: center; padding: 24px; }
+  #notice.show { display: flex; }
+  #notice .box { background: #fff; border-radius: 16px; padding: 22px 20px 16px; max-width: 340px; width: 100%;
+                 text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  #notice .icon { font-size: 30px; line-height: 1; margin-bottom: 8px; }
+  #notice p { white-space: pre-line; margin: 0 0 18px; font-size: 17px; font-weight: 700; line-height: 1.6; color: var(--ink); }
+  #notice button { width: 100%; border: 0; border-radius: 12px; padding: 13px; font-size: 17px; font-weight: 700;
+                   background: var(--accent); color: #fff; }
   #demo { background: #fff4d6; font-size: 12px; text-align: center; padding: 6px; display: none; }
 </style>
 </head>
@@ -129,6 +138,13 @@
   </section>
 </main>
 <div id="toast"></div>
+<div id="notice" role="dialog" aria-modal="true">
+  <div class="box">
+    <div class="icon">⚠️</div>
+    <p id="noticeText"></p>
+    <button id="noticeOk">OK</button>
+  </div>
+</div>
 
 <script>
 // ============ 設定（ここだけ編集） ============
@@ -144,6 +160,10 @@ const MENU = [
   { name: 'ココア',             price: 200, color: '#7A3E6E' },
 ];
 const PAYMENTS = ['現金', 'PayPay'];
+
+// この日以降、ページを開くたびに最初に注意メッセージを表示（年, 月, 日）
+const NOTICE_FROM = new Date(2026, 11 - 1, 12);
+const NOTICE_TEXT = '三田祭期間中、\nレジ担当者以外は\n入力しないでください';  // \n で改行
 
 // 端末に残す注文履歴の保存時間（分）
 const HISTORY_MINUTES = 60;
@@ -433,6 +453,11 @@ document.title = SHOP_NAME;
 if (!IS_LIVE) $('demo').style.display = 'block';
 purgeHistory();
 setInterval(purgeHistory, 60 * 1000);
+if (Date.now() >= NOTICE_FROM.getTime()) {
+  $('noticeText').textContent = NOTICE_TEXT;
+  $('notice').classList.add('show');
+  $('noticeOk').onclick = () => $('notice').classList.remove('show');
+}
 render(); showSummary(); flush();
 </script>
 </body>
