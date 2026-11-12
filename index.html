@@ -163,7 +163,8 @@ const PAYMENTS = ['現金', 'PayPay'];
 
 // この日以降、ページを開くたびに最初に注意メッセージを表示（年, 月, 日）
 const NOTICE_FROM = new Date(2026, 11 - 1, 12);
-const NOTICE_TEXT = '三田祭期間中、\nレジ担当者以外は\n入力しないでください';  // \n で改行
+const NOTICE_TEXT = '本番モードです\nレジ担当者以外は\n入力しないでください';  // \n で改行
+const NOTICE_TEXT_TEST = 'テストモードです\n11/20(金)以降、\n本番モードに切り替わります';  // \n で改行
 
 // 端末に残す注文履歴の保存時間（分）
 const HISTORY_MINUTES = 60;
@@ -455,6 +456,10 @@ purgeHistory();
 setInterval(purgeHistory, 60 * 1000);
 if (Date.now() >= NOTICE_FROM.getTime()) {
   $('noticeText').textContent = NOTICE_TEXT;
+  $('notice').classList.add('show');
+  $('noticeOk').onclick = () => $('notice').classList.remove('show');
+} else {
+  $('noticeText').textContent = NOTICE_TEXT_TEST;
   $('notice').classList.add('show');
   $('noticeOk').onclick = () => $('notice').classList.remove('show');
 }
