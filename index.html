@@ -302,6 +302,7 @@ function renderCart() {
 
 function renderPayments() {
   $('payments').innerHTML = '';
+  $('payments').style.display = PAYMENTS.length > 1 ? '' : 'none';
   PAYMENTS.forEach(p => {
     const b = document.createElement('button');
     b.textContent = p;
