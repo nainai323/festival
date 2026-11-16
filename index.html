@@ -371,7 +371,7 @@ function toast(msg) {
 // 端末コード
 const DEVICE_ID = store('deviceId') || (() => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  // 見間違えやすい I,O,0,1 は除外
-  const id = Array.from({ length: 3 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const id = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   store('deviceId', id); return id;
 })();
 // 注文ID：端末コード-時刻+ランダム4文字
@@ -431,7 +431,7 @@ function showSummary() {
   const pays = PAYMENTS.map(p => `<tr><td>${p}</td><td>${yen(tally.byPay[p] || 0)}</td></tr>`).join('');
   $('summary').className = '';
   $('summary').innerHTML = `<div class="big">${yen(tally.total)}</div>
-    <div style="color:var(--sub)">${tally.orders}件の注文</div><table>${items}${pays}</table>`;
+    <div style="color:var(--sub)">${tally.orders}件の注文</div><table>${items}</table>`;
 }
 $('refreshBtn').onclick = showSummary;
 
