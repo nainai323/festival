@@ -35,9 +35,12 @@
   .item .head { margin-bottom: 6px; display: flex; flex-direction: column; align-items: center; }
   .item .head .tag { margin-bottom: 3px; }
   .item .sz { display: flex; flex-direction: column; gap: 5px; width: 100%; margin-top: auto; }
-  .item .sz button { position: relative; border: 0; border-radius: 9px; padding: 9px 2px;
+  .item .sz button { position: relative; border: 0; border-radius: 9px; padding: 6px 2px;
                      background: rgba(255,255,255,.22); color: #fff; font-size: 13px; font-weight: 700;
                      text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  .item .sz button b { font-size: 15px; margin-right: 2px; }
+  .menu.noml .item .sz button { padding: 11px 2px; }
+  .item .sz button .ml { display: block; font-size: 10px; font-weight: 600; opacity: .9; margin-top: 1px; }
   .item .sz button:active { background: rgba(255,255,255,.45); }
   .item .sz .badge { top: -7px; right: -4px; bottom: auto; min-width: 22px; height: 22px; line-height: 22px; font-size: 12px; }
   .item small { display: block; font-size: 13px; font-weight: 500; margin-top: 4px; opacity: .95; }
@@ -160,21 +163,28 @@
 <script>
 // ============ 設定（ここだけ編集） ============
 const SHOP_NAME = 'レジシステム';
-// サイズ（2サイズにする商品で共通）
-const SIZES = [
-  { label: '200ml', price: 200 },
-  { label: '300ml', price: 300 },
+// ボタンに量（200ml など）を表示するか：true で表示、false で非表示
+const SHOW_ML = false;
+
+// サイズ設定。label は記録に使う名前（S / L）、ml はボタンに表示する量
+const COLD_SIZES = [
+  { label: 'S', ml: '200ml', price: 200 },
+  { label: 'L', ml: '400ml', price: 300 },
 ];
-// 2サイズの商品は sizes: SIZES、1サイズにしたい商品は sizes を消して price: 200 のように書く
+const HOT_SIZES = [
+  { label: 'S', ml: '200ml', price: 200 },
+  { label: 'L', ml: '300ml', price: 300 },
+];
+// 2サイズの商品は sizes: COLD_SIZES か HOT_SIZES、1サイズにしたい商品は sizes を消して price: 200 のように書く
 const MENU = [
-  { name: '[ゼリー]ザクロ',     color: '#B0263E', sizes: SIZES },
-  { name: '[ゼリー]レモネード', color: '#A87B0C', sizes: SIZES },
-  { name: '[ゼリー]サイダー',   color: '#1D74B0', sizes: SIZES },
-  { name: 'ザクロ',             color: '#B0263E', sizes: SIZES },
-  { name: 'レモネード',         color: '#A87B0C', sizes: SIZES },
-  { name: 'サイダー',           color: '#1D74B0', sizes: SIZES },
-  { name: 'コーヒー',           color: '#4A3328', sizes: SIZES },
-  { name: 'ココア',             color: '#7A3E6E', sizes: SIZES },
+  { name: '[ゼリー]ザクロ',     color: '#B0263E', sizes: COLD_SIZES },
+  { name: '[ゼリー]レモネード', color: '#A87B0C', sizes: COLD_SIZES },
+  { name: '[ゼリー]サイダー',   color: '#1D74B0', sizes: COLD_SIZES },
+  { name: 'ザクロ',             color: '#B0263E', sizes: COLD_SIZES },
+  { name: 'レモネード',         color: '#A87B0C', sizes: COLD_SIZES },
+  { name: 'サイダー',           color: '#1D74B0', sizes: COLD_SIZES },
+  { name: 'コーヒー',           color: '#4A3328', sizes: HOT_SIZES },
+  { name: 'ココア',             color: '#7A3E6E', sizes: HOT_SIZES },
   // 1サイズの例：{ name: 'ココア', color: '#7A3E6E', price: 200 },
 ];
 // 商品×サイズを1つずつの「売り物」に展開（記録名は「ザクロ 200ml」のようになる）
@@ -280,6 +290,7 @@ function alertBar(msg) {
 // ---------- 画面 ----------
 function renderMenu() {
   $('menu').innerHTML = '';
+  $('menu').classList.toggle('noml', !SHOW_ML);
   MENU.forEach(m => {
     const jelly = m.name.match(/^\[ゼリー\](.*)$/);
     const title = jelly ? `<span class="tag">ゼリー入り</span>${jelly[1]}` : m.name;
@@ -294,7 +305,7 @@ function renderMenu() {
       m.sizes.forEach(z => {
         const key = `${m.name} ${z.label}`;
         const sb = document.createElement('button');
-        sb.innerHTML = `${z.label} ${yen(z.price)}${badge(key)}`;
+        sb.innerHTML = `<b>${z.label}</b> ${yen(z.price)}${SHOW_ML && z.ml ? `<span class="ml">${z.ml}</span>` : ''}${badge(key)}`;
         sb.onclick = () => add(key);
         box.querySelector('.sz').appendChild(sb);
       });
