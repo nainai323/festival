@@ -478,7 +478,9 @@ function cancelOrder(o) {
 // この端末の本日分を表示
 function showSummary() {
   if (tally.day !== new Date().toDateString()) { tally = emptyTally(); store('tally', tally); }
-  const items = VARIANTS.map(v => `<tr><td>${v.key}</td><td>${tally.byItem[v.key] || 0}杯</td></tr>`).join('');
+  const items = VARIANTS.filter(v => (tally.byItem[v.key] || 0) !== 0)   // 0杯の商品は表示しない
+  .map(v => `<tr><td>${v.key}</td><td>${tally.byItem[v.key]}杯</td></tr>`).join('')
+  || '<tr><td style="color:var(--sub)">まだ注文はありません</td><td></td></tr>';
   $('summary').className = '';
   $('summary').innerHTML = `<div class="big">${yen(tally.total)}</div>
     <div style="color:var(--sub)">${tally.orders}件の注文</div>
