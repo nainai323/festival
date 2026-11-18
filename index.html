@@ -30,6 +30,16 @@
   .item .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; margin-bottom: 4px;
                border-radius: 99px; background: #fff; color: #333; text-shadow: none; letter-spacing: .05em; }
   .item:active { transform: translateY(2px); box-shadow: none; }
+  .item.sized { padding: 8px 6px 6px; justify-content: flex-start; }
+  .item.sized:active { transform: none; box-shadow: 0 2px 0 rgba(0,0,0,.15); }
+  .item .head { margin-bottom: 6px; display: flex; flex-direction: column; align-items: center; }
+  .item .head .tag { margin-bottom: 3px; }
+  .item .sz { display: flex; flex-direction: column; gap: 5px; width: 100%; margin-top: auto; }
+  .item .sz button { position: relative; border: 0; border-radius: 9px; padding: 9px 2px;
+                     background: rgba(255,255,255,.22); color: #fff; font-size: 13px; font-weight: 700;
+                     text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  .item .sz button:active { background: rgba(255,255,255,.45); }
+  .item .sz .badge { top: -7px; right: -4px; bottom: auto; min-width: 22px; height: 22px; line-height: 22px; font-size: 12px; }
   .item small { display: block; font-size: 13px; font-weight: 500; margin-top: 4px; opacity: .95; }
   .item .badge { position: absolute; bottom: 6px; right: 6px; background: #fff; color: var(--ink);
                  border-radius: 99px; min-width: 26px; height: 26px; line-height: 26px; font-size: 14px;
@@ -76,6 +86,7 @@
   .sum table { width: 100%; border-collapse: collapse; margin-top: 6px; }
   .sum td { padding: 3px 0; border-bottom: 1px solid var(--line); }
   .sum td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .sum .sec { font-size: 12px; color: var(--sub); font-weight: 600; margin-top: 12px; }
   .link { background: none; border: 0; color: var(--accent); font-size: 13px; padding: 0; text-decoration: underline; }
 
   #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(80px);
@@ -93,7 +104,6 @@
                    background: var(--accent); color: #fff; }
   #demo { background: #fff4d6; font-size: 12px; text-align: center; padding: 6px; display: none; }
 </style>
-
 </head>
 <body>
 <header>
@@ -150,27 +160,39 @@
 <script>
 // ============ 設定（ここだけ編集） ============
 const SHOP_NAME = 'レジシステム';
-const MENU = [
-  { name: '[ゼリー]ザクロ',     price: 200, color: '#B0263E' },
-  { name: '[ゼリー]レモネード', price: 200, color: '#A87B0C' },
-  { name: '[ゼリー]サイダー',   price: 200, color: '#1D74B0' },
-  { name: 'ザクロ',             price: 200, color: '#B0263E' },
-  { name: 'レモネード',         price: 200, color: '#A87B0C' },
-  { name: 'サイダー',           price: 200, color: '#1D74B0' },
-  { name: 'コーヒー',           price: 200, color: '#4A3328' },
-  { name: 'ココア',             price: 200, color: '#7A3E6E' },
+// サイズ（2サイズにする商品で共通）
+const SIZES = [
+  { label: '200ml', price: 200 },
+  { label: '300ml', price: 300 },
 ];
-const PAYMENTS = ['現金'];
+// 2サイズの商品は sizes: SIZES、1サイズにしたい商品は sizes を消して price: 200 のように書く
+const MENU = [
+  { name: '[ゼリー]ザクロ',     color: '#B0263E', sizes: SIZES },
+  { name: '[ゼリー]レモネード', color: '#A87B0C', sizes: SIZES },
+  { name: '[ゼリー]サイダー',   color: '#1D74B0', sizes: SIZES },
+  { name: 'ザクロ',             color: '#B0263E', sizes: SIZES },
+  { name: 'レモネード',         color: '#A87B0C', sizes: SIZES },
+  { name: 'サイダー',           color: '#1D74B0', sizes: SIZES },
+  { name: 'コーヒー',           color: '#4A3328', sizes: SIZES },
+  { name: 'ココア',             color: '#7A3E6E', sizes: SIZES },
+  // 1サイズの例：{ name: 'ココア', color: '#7A3E6E', price: 200 },
+];
+// 商品×サイズを1つずつの「売り物」に展開（記録名は「ザクロ 200ml」のようになる）
+const VARIANTS = MENU.flatMap(m => m.sizes
+  ? m.sizes.map(z => ({ key: `${m.name} ${z.label}`, label: z.label, price: z.price }))
+  : [{ key: m.name, label: '', price: m.price }]);
+const PAYMENTS = ['現金'];   // 支払方法が1つだけのときは選択ボタンを表示しない
 
-// 注意メッセージ
-const NOTICE_FROM = new Date(2026, 11 - 1, 20);
-const NOTICE_TEXT = '本番モードです\nレジ担当者以外は\n入力しないでください'; 
-const NOTICE_TEXT_TEST = 'テストモードです\n11/20(金)より\n本番モードに切り替わります'; 
-
-// 端末に残す注文履歴の保存時間（分）
+// 端末に残す注文履歴の保存時間（分）。過ぎた注文は「直近の注文」から消え、取り消しもできなくなる
+// （スプレッドシートの記録は消えません）
 const HISTORY_MINUTES = 60;
 
+// この日以降、ページを開くたびに最初に注意メッセージを表示（年, 月, 日）
+const NOTICE_FROM = new Date(2026, 11 - 1, 19);
+const NOTICE_TEXT = '三田祭期間中、\nレジ担当者以外は\n入力しないでください';  // \n で改行
+
 // Googleフォームの「事前入力したURL」をそのまま貼る（空なら見本モード）
+// フォームの質問は上から順に：商品 / 数量 / 金額 / 支払方法 / 注文ID（すべて「記述式」）
 const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSei37LaK86K9bl1t1EmREUWsIT5VFjbVuymmjlQrfWRA9iKTw/viewform?usp=pp_url&entry.787038204=a&entry.1135829955=b&entry.725204255=c&entry.300637915=d&entry.984296458=e';
 // =============================================
 
@@ -259,20 +281,37 @@ function alertBar(msg) {
 function renderMenu() {
   $('menu').innerHTML = '';
   MENU.forEach(m => {
-    const b = document.createElement('button');
     const jelly = m.name.match(/^\[ゼリー\](.*)$/);
-    b.className = 'item' + (jelly ? ' jelly' : '');
-    b.style.background = m.color || '#6b7a8f';
-    b.innerHTML = (jelly ? `<span class="tag">ゼリー入り</span>${jelly[1]}` : m.name) +
-      `<small>${yen(m.price)}</small>` +
-      (cart[m.name] ? `<span class="badge">${cart[m.name]}</span>` : '');
-    b.onclick = () => { cart[m.name] = (cart[m.name] || 0) + 1; render(); };
-    $('menu').appendChild(b);
+    const title = jelly ? `<span class="tag">ゼリー入り</span>${jelly[1]}` : m.name;
+    const badge = key => cart[key] ? `<span class="badge">${cart[key]}</span>` : '';
+    const add = key => { cart[key] = (cart[key] || 0) + 1; render(); };
+    if (m.sizes) {
+      // 2サイズ：ボタンの中にサイズごとのボタンを並べる
+      const box = document.createElement('div');
+      box.className = 'item sized';
+      box.style.background = m.color || '#6b7a8f';
+      box.innerHTML = `<div class="head">${title}</div><div class="sz"></div>`;
+      m.sizes.forEach(z => {
+        const key = `${m.name} ${z.label}`;
+        const sb = document.createElement('button');
+        sb.innerHTML = `${z.label} ${yen(z.price)}${badge(key)}`;
+        sb.onclick = () => add(key);
+        box.querySelector('.sz').appendChild(sb);
+      });
+      $('menu').appendChild(box);
+    } else {
+      const b = document.createElement('button');
+      b.className = 'item';
+      b.style.background = m.color || '#6b7a8f';
+      b.innerHTML = `${title}<small>${yen(m.price)}</small>${badge(m.name)}`;
+      b.onclick = () => add(m.name);
+      $('menu').appendChild(b);
+    }
   });
 }
 
 function cartItems() {
-  return MENU.filter(m => cart[m.name] > 0).map(m => ({ name: m.name, price: m.price, qty: cart[m.name] }));
+  return VARIANTS.filter(v => cart[v.key] > 0).map(v => ({ name: v.key, price: v.price, qty: cart[v.key] }));
 }
 function cartTotal() { return cartItems().reduce((s, it) => s + it.price * it.qty, 0); }
 function orderTotal(o) { return o.items.reduce((s, it) => s + it.price * it.qty, 0); }
@@ -346,7 +385,7 @@ function renderHistory() {
       b.textContent = '取消';
       b.onclick = () => {
         if (b.dataset.arm) return cancelOrder(o);
-        b.dataset.arm = 1; b.textContent = 'もう一度押して取消';
+        b.dataset.arm = 1; b.textContent = 'もう一度で取消';
         setTimeout(() => { delete b.dataset.arm; b.textContent = '取消'; }, 3000);
       };
       row.appendChild(b);
@@ -369,13 +408,13 @@ function toast(msg) {
 }
 
 // ---------- 記録・送信 ----------
-// 端末コード
+// 端末コード：初回に自動で作ってこの端末に保存（例：K7P）
 const DEVICE_ID = store('deviceId') || (() => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  // 見間違えやすい I,O,0,1 は除外
   const id = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   store('deviceId', id); return id;
 })();
-// 注文ID：端末コード-時刻+ランダム4文字
+// 注文ID：端末コード-時刻+ランダム4文字（例：K7P-mwc3lr5f2mx8）
 function newId() { return DEVICE_ID + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 function enqueueOrder(order, sign) {
@@ -428,11 +467,11 @@ function cancelOrder(o) {
 // この端末の本日分を表示
 function showSummary() {
   if (tally.day !== new Date().toDateString()) { tally = emptyTally(); store('tally', tally); }
-  const items = MENU.map(m => `<tr><td>${m.name}</td><td>${tally.byItem[m.name] || 0}杯</td></tr>`).join('');
-  const pays = PAYMENTS.map(p => `<tr><td>${p}</td><td>${yen(tally.byPay[p] || 0)}</td></tr>`).join('');
+  const items = VARIANTS.map(v => `<tr><td>${v.key}</td><td>${tally.byItem[v.key] || 0}杯</td></tr>`).join('');
   $('summary').className = '';
   $('summary').innerHTML = `<div class="big">${yen(tally.total)}</div>
-    <div style="color:var(--sub)">${tally.orders}件の注文</div><table>${items}</table>`;
+    <div style="color:var(--sub)">${tally.orders}件の注文</div>
+    <div class="sec">商品別</div><table>${items}</table>`;
 }
 $('refreshBtn').onclick = showSummary;
 
@@ -440,7 +479,7 @@ $('refreshBtn').onclick = showSummary;
 $('resetBtn').onclick = () => {
   const b = $('resetBtn');
   if (!b.dataset.arm) {
-    b.dataset.arm = 1; b.textContent = 'もう一度押してリセット';
+    b.dataset.arm = 1; b.textContent = 'もう一度でリセット';
     setTimeout(() => { delete b.dataset.arm; b.textContent = 'リセット'; }, 3000);
     return;
   }
@@ -458,10 +497,6 @@ purgeHistory();
 setInterval(purgeHistory, 60 * 1000);
 if (Date.now() >= NOTICE_FROM.getTime()) {
   $('noticeText').textContent = NOTICE_TEXT;
-  $('notice').classList.add('show');
-  $('noticeOk').onclick = () => $('notice').classList.remove('show');
-} else {
-  $('noticeText').textContent = NOTICE_TEXT_TEST;
   $('notice').classList.add('show');
   $('noticeOk').onclick = () => $('notice').classList.remove('show');
 }
