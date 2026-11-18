@@ -22,7 +22,7 @@
   main { max-width: 760px; margin: 0 auto; padding: 12px; display: grid; gap: 12px; }
   @media (min-width: 700px) { main { grid-template-columns: 1.3fr 1fr; align-items: start; } }
 
-  .menu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .menu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .item { border: 0; border-radius: 14px; padding: 12px 4px; min-height: 96px; color: #fff;
           font-size: 16px; font-weight: 700; line-height: 1.25; position: relative;
           text-shadow: 0 1px 2px rgba(0,0,0,.3); box-shadow: 0 2px 0 rgba(0,0,0,.15);
@@ -30,16 +30,16 @@
   .item .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; margin-bottom: 4px;
                border-radius: 99px; background: #fff; color: #333; text-shadow: none; letter-spacing: .05em; }
   .item:active { transform: translateY(2px); box-shadow: none; }
-  .item.sized { padding: 8px 6px 6px; justify-content: flex-start; }
+  .item.sized { padding: 6px 5px 5px; justify-content: flex-start; font-size: 15px; line-height: 1.2; }
   .item.sized:active { transform: none; box-shadow: 0 2px 0 rgba(0,0,0,.15); }
-  .item .head { margin-bottom: 6px; display: flex; flex-direction: column; align-items: center; }
-  .item .head .tag { margin-bottom: 3px; }
-  .item .sz { display: flex; flex-direction: column; gap: 5px; width: 100%; margin-top: auto; }
+  .item .head { margin-bottom: 4px; display: flex; flex-direction: column; align-items: center; }
+  .item .head .tag { margin-bottom: 2px; font-size: 10px; padding: 0 6px; }
+  .item .sz { display: flex; flex-direction: column; gap: 4px; width: 100%; margin-top: auto; }
   .item .sz button { position: relative; border: 0; border-radius: 9px; padding: 6px 2px;
                      background: rgba(255,255,255,.22); color: #fff; font-size: 13px; font-weight: 700;
                      text-shadow: 0 1px 2px rgba(0,0,0,.3); }
   .item .sz button b { font-size: 15px; margin-right: 2px; }
-  .menu.noml .item .sz button { padding: 11px 2px; }
+  .menu.noml .item .sz button { padding: 8px 2px; }
   .item .sz button .ml { display: block; font-size: 10px; font-weight: 600; opacity: .9; margin-top: 1px; }
   .item .sz button:active { background: rgba(255,255,255,.45); }
   .item .sz .badge { top: -7px; right: -4px; bottom: auto; min-width: 22px; height: 22px; line-height: 22px; font-size: 12px; }
@@ -479,8 +479,8 @@ function cancelOrder(o) {
 function showSummary() {
   if (tally.day !== new Date().toDateString()) { tally = emptyTally(); store('tally', tally); }
   const items = VARIANTS.filter(v => (tally.byItem[v.key] || 0) !== 0)   // 0杯の商品は表示しない
-  .map(v => `<tr><td>${v.key}</td><td>${tally.byItem[v.key]}杯</td></tr>`).join('')
-  || '<tr><td style="color:var(--sub)">まだ注文はありません</td><td></td></tr>';
+    .map(v => `<tr><td>${v.key}</td><td>${tally.byItem[v.key]}杯</td></tr>`).join('')
+    || '<tr><td style="color:var(--sub)">まだ注文はありません</td><td></td></tr>';
   $('summary').className = '';
   $('summary').innerHTML = `<div class="big">${yen(tally.total)}</div>
     <div style="color:var(--sub)">${tally.orders}件の注文</div>
