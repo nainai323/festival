@@ -200,6 +200,7 @@ const HISTORY_MINUTES = 60;
 // この日以降、ページを開くたびに最初に注意メッセージを表示（年, 月, 日）
 const NOTICE_FROM = new Date(2026, 11 - 1, 20);
 const NOTICE_TEXT = '三田祭期間中、\nレジ担当者以外は\n入力しないでください';  // \n で改行
+const NOTICE_PRE_TEXT = 'テストモードです\n20日(金)より\n本番モードに切り替わります';  // \n で改行
 
 // Googleフォームの「事前入力したURL」をそのまま貼る（空なら見本モード）
 // フォームの質問は上から順に：商品 / 数量 / 金額 / 支払方法 / 注文ID（すべて「記述式」）
@@ -510,6 +511,10 @@ purgeHistory();
 setInterval(purgeHistory, 60 * 1000);
 if (Date.now() >= NOTICE_FROM.getTime()) {
   $('noticeText').textContent = NOTICE_TEXT;
+  $('notice').classList.add('show');
+  $('noticeOk').onclick = () => $('notice').classList.remove('show');
+} else {
+  $('noticeText').textContent = NOTICE_PRE_TEXT;
   $('notice').classList.add('show');
   $('noticeOk').onclick = () => $('notice').classList.remove('show');
 }
