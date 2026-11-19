@@ -168,11 +168,11 @@ const SHOW_ML = false;
 
 // サイズ設定。label は記録に使う名前（S / L）、ml はボタンに表示する量
 const COLD_SIZES = [
-  { label: 'S', ml: '200ml', price: 200 },
+  { label: 'M', ml: '200ml', price: 200 },
   { label: 'L', ml: '400ml', price: 300 },
 ];
 const HOT_SIZES = [
-  { label: 'S', ml: '200ml', price: 200 },
+  { label: 'M', ml: '200ml', price: 200 },
   { label: 'L', ml: '300ml', price: 300 },
 ];
 // 2サイズの商品は sizes: COLD_SIZES か HOT_SIZES、1サイズにしたい商品は sizes を消して price: 200 のように書く
@@ -197,7 +197,7 @@ const PAYMENTS = ['現金'];   // 支払方法が1つだけのときは選択ボ
 // （スプレッドシートの記録は消えません）
 const HISTORY_MINUTES = 60;
 
-// この日以降、ページを開くたびに最初に注意メッセージを表示（年, 月, 日）
+// ページを開くたびに最初に注意メッセージを表示（年, 月, 日）
 const NOTICE_FROM = new Date(2026, 11 - 1, 20);
 const NOTICE_TEXT = '三田祭期間中、\nレジ担当者以外は\n入力しないでください';  // \n で改行
 const NOTICE_PRE_TEXT = 'テストモードです\n20日(金)より\n本番モードに切り替わります';  // \n で改行
@@ -426,7 +426,7 @@ const DEVICE_ID = store('deviceId') || (() => {
   const id = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
   store('deviceId', id); return id;
 })();
-// 注文ID：端末コード-時刻+ランダム4文字（例：K7P-mwc3lr5f2mx8）
+// 注文ID：端末コード-時刻+ランダム4文字
 function newId() { return DEVICE_ID + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 function enqueueOrder(order, sign) {
