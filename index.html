@@ -168,12 +168,12 @@ const SHOW_ML = false;
 
 // サイズ設定。label は記録に使う名前（S / L）、ml はボタンに表示する量
 const COLD_SIZES = [
-  { label: 'M', ml: '200ml', price: 200 },
-  { label: 'L', ml: '400ml', price: 300 },
+  { label: 'M', ml: '200ml', price: 300 },
+  { label: 'L', ml: '400ml', price: 400 },
 ];
 const HOT_SIZES = [
-  { label: 'M', ml: '200ml', price: 200 },
-  { label: 'L', ml: '300ml', price: 300 },
+  { label: 'M', ml: '200ml', price: 300 },
+  { label: 'L', ml: '300ml', price: 400 },
 ];
 // 2サイズの商品は sizes: COLD_SIZES か HOT_SIZES、1サイズにしたい商品は sizes を消して price: 200 のように書く
 const MENU = [
@@ -183,8 +183,8 @@ const MENU = [
   { name: 'ザクロ',             color: '#B0263E', sizes: COLD_SIZES },
   { name: 'レモネード',         color: '#A87B0C', sizes: COLD_SIZES },
   { name: 'サイダー',           color: '#1D74B0', sizes: COLD_SIZES },
-  { name: 'コーヒー',           color: '#4A3328', price: 200 },
-  { name: 'ココア',             color: '#7A3E6E', price: 200 },
+  { name: 'コーヒー',           color: '#4A3328', price: 300 },
+  { name: 'ココア',             color: '#7A3E6E', price: 300 },
   // 1サイズの例：{ name: 'ココア', color: '#7A3E6E', price: 200 },
 ];
 // 商品×サイズを1つずつの「売り物」に展開（記録名は「ザクロ 200ml」のようになる）
